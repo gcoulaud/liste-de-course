@@ -1,0 +1,14 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Liste partagée unique du foyer
+    match /shared/home/items/{itemId} {
+      allow read, write: if true;
+    }
+
+    // Suggestions d'autocomplétion partagées
+    match /shared/home/suggestions/{suggestionId} {
+      allow read, write: if true;
+    }
+  }
+}

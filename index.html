@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#60a5fa" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="Courses" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <title>Liste de courses</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="app">
+      <header class="app__header">
+        <h1>Ma liste de courses</h1>
+        <p>Ajoute et supprime tes articles.</p>
+      </header>
+
+      <section class="card">
+        <span id="sync-status" class="sync-status"></span>
+
+        <form id="add-item-form" class="add-item-form" autocomplete="off">
+          <div class="input-group">
+            <label for="item-input" class="sr-only">Nouvel article</label>
+            <input
+              id="item-input"
+              name="item"
+              type="text"
+              placeholder="Ex: Tomates, pain complet, yaourts..."
+              maxlength="80"
+              required
+            />
+            <ul id="autocomplete-list" class="autocomplete-list" hidden></ul>
+          </div>
+
+          <button type="submit">Ajouter</button>
+        </form>
+
+        <div class="toolbar">
+          <span id="items-left">0 article</span>
+          <div class="toolbar__actions">
+            <button id="refresh-btn" type="button" class="refresh-btn" aria-label="Rafraîchir">
+              ↻
+            </button>
+            <button id="qr-share-btn" type="button" class="qr-share-btn" aria-label="Afficher le QR code">
+              <span class="qr-share-icon" aria-hidden="true"></span>
+            </button>
+            <button id="clear-done" type="button" class="btn-secondary">Supprimer</button>
+          </div>
+        </div>
+
+        <ul id="shopping-list" class="shopping-list" aria-live="polite"></ul>
+      </section>
+    </main>
+
+    <div id="qr-modal" class="qr-modal" hidden>
+      <div class="qr-modal__panel">
+        <img id="qr-image" src="./qr-code.png" alt="QR code de partage" />
+      </div>
+    </div>
+
+    <template id="item-template">
+      <li class="shopping-item">
+        <div class="shopping-item__main">
+          <div class="shopping-item__content">
+            <button type="button" class="shopping-item__icon-btn" aria-label="Marquer comme acheté">
+              <span class="shopping-item__icon" aria-hidden="true">🛒</span>
+            </button>
+            <span class="shopping-item__text"></span>
+          </div>
+          <label class="sr-only">Catégorie</label>
+          <select class="shopping-item__category" aria-label="Catégorie de l'article">
+            <option value="fruits_legumes">Fruits &amp; légumes</option>
+            <option value="frais">Laitage</option>
+            <option value="viandes">Viandes</option>
+            <option value="poissons">Poissons</option>
+            <option value="epicerie">Épicerie</option>
+            <option value="boissons">Boissons</option>
+            <option value="hygiene_maison">Hygiène &amp; maison</option>
+            <option value="alcool">Alcool</option>
+            <option value="autres">Autres</option>
+          </select>
+        </div>
+        <button type="button" class="delete-btn" aria-label="Supprimer l'article">Supprimer</button>
+      </li>
+    </template>
+
+    <script type="module" src="app.js"></script>
+  </body>
+</html>
