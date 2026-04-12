@@ -1,23 +1,24 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
-import {
-  addDoc,
-  collection,
-  deleteDoc,
-  doc,
-  getDocs,
-  getFirestore,
-  onSnapshot,
-  orderBy,
-  query,
-  serverTimestamp,
-  setDoc,
-  updateDoc,
-  writeBatch,
-} from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 import { firebaseConfig } from "./firebase-config.js";
+
+let addDoc;
+let collection;
+let deleteDoc;
+let doc;
+let getDocs;
+let getFirestore;
+let initializeApp;
+let onSnapshot;
+let orderBy;
+let query;
+let serverTimestamp;
+let setDoc;
+let updateDoc;
+let writeBatch;
 
 const LOCAL_STORAGE_KEY = "shopping_list_local_items_v1";
 const CUSTOM_SUGGESTIONS_KEY = "shopping_list_custom_suggestions_v1";
+const USER_PROFILE_KEY = "shopping_list_user_profile_v1";
+const DEFAULT_USER = { id: "home", name: "Maison" };
 const CATEGORY_ORDER = [
   "fruits_legumes",
   "frais",
@@ -185,6 +186,9 @@ const itemsLeftElement = document.getElementById("items-left");
 const template = document.getElementById("item-template");
 const autocompleteList = document.getElementById("autocomplete-list");
 const statusElement = document.getElementById("sync-status");
+const userNameInput = document.getElementById("user-name-input");
+const saveUserBtn = document.getElementById("save-user-btn");
+const beaufilsUserBtn = document.getElementById("beaufils-user-btn");
 const qrShareBtn = document.getElementById("qr-share-btn");
 const qrModal = document.getElementById("qr-modal");
 const qrImage = document.getElementById("qr-image");
@@ -195,26 +199,19 @@ let items = [];
 let unsubscribeItems = null;
 let unsubscribeSuggestions = null;
 let cloudSuggestions = [];
+let currentUser = loadUserProfile();
+let cloudUnavailable = false;
 
 const isFirebaseConfigured = Boolean(
   firebaseConfig.apiKey && firebaseConfig.projectId && firebaseConfig.appId
 );
 
 let db = null;
-if (isFirebaseConfigured) {
-  const app = initializeApp(firebaseConfig);
-  db = getFirestore(app);
-} else {
-  items = loadLocalItems();
+if (userNameInput) {
+  userNameInput.value = currentUser.name;
 }
 
-setStatus();
-if (isFirebaseConfigured) {
-  connectToSharedList();
-  connectToSharedSuggestions();
-} else {
-  render();
-}
+bootstrap();
 
 form.addEventListener("submit", async (event) => {
   event.preventDefault();
@@ -283,6 +280,16 @@ clearBtn.addEventListener("click", async () => {
 if (refreshBtn) {
   refreshBtn.addEventListener("click", () => {
     window.location.reload();
+  });
+}
+
+if (saveUserBtn && userNameInput) {
+  saveUserBtn.addEventListener("click", () => switchUser(userNameInput.value));
+}
+
+if (beaufilsUserBtn && userNameInput) {
+  beaufilsUserBtn.addEventListener("click", () => {
+    switchUser("Beau-fils");
   });
 }
 
@@ -364,6 +371,53 @@ if (qrShareBtn && qrModal && qrImage) {
   });
 }
 
+async function bootstrap() {
+  if (isFirebaseConfigured) {
+    const firebaseReady = await loadFirebaseModules();
+    if (firebaseReady) {
+      const app = initializeApp(firebaseConfig);
+      db = getFirestore(app);
+      setStatus();
+      connectToSharedList();
+      connectToSharedSuggestions();
+      return;
+    }
+  }
+
+  items = loadLocalItems();
+  setStatus();
+  render();
+}
+
+async function loadFirebaseModules() {
+  try {
+    const [appModule, firestoreModule] = await Promise.all([
+      import("https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js"),
+      import("https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js"),
+    ]);
+
+    initializeApp = appModule.initializeApp;
+    addDoc = firestoreModule.addDoc;
+    collection = firestoreModule.collection;
+    deleteDoc = firestoreModule.deleteDoc;
+    doc = firestoreModule.doc;
+    getDocs = firestoreModule.getDocs;
+    getFirestore = firestoreModule.getFirestore;
+    onSnapshot = firestoreModule.onSnapshot;
+    orderBy = firestoreModule.orderBy;
+    query = firestoreModule.query;
+    serverTimestamp = firestoreModule.serverTimestamp;
+    setDoc = firestoreModule.setDoc;
+    updateDoc = firestoreModule.updateDoc;
+    writeBatch = firestoreModule.writeBatch;
+    cloudUnavailable = false;
+    return true;
+  } catch {
+    cloudUnavailable = true;
+    return false;
+  }
+}
+
 function connectToSharedList() {
   if (unsubscribeItems) {
     unsubscribeItems();
@@ -381,8 +435,10 @@ function connectToSharedList() {
       render();
       setStatus();
     },
-    () => {
-      statusElement.textContent = "Cloud indisponible, reconnexion...";
+    (error) => {
+      const code = error?.code ? ` (${error.code})` : "";
+      statusElement.textContent = `Cloud indisponible, reconnexion...${code}`;
+      console.error("Firestore items sync error:", error);
     }
   );
 }
@@ -400,27 +456,69 @@ function connectToSharedSuggestions() {
         .map((suggestionDoc) => suggestionDoc.data()?.text)
         .filter((value) => typeof value === "string");
     },
-    () => {
-      statusElement.textContent = "Sync suggestions indisponible, reconnexion...";
+    (error) => {
+      const code = error?.code ? ` (${error.code})` : "";
+      statusElement.textContent = `Sync suggestions indisponible, reconnexion...${code}`;
+      console.error("Firestore suggestions sync error:", error);
     }
   );
 }
 
 function itemsCollection() {
-  return collection(db, "shared", "home", "items");
+  return collection(db, "users", currentUser.id, "items");
 }
 
 function suggestionsCollection() {
-  return collection(db, "shared", "home", "suggestions");
+  return collection(db, "users", currentUser.id, "suggestions");
+}
+
+function itemDocRef(itemId) {
+  return doc(db, "users", currentUser.id, "items", itemId);
+}
+
+function suggestionDocRef(suggestionId) {
+  return doc(db, "users", currentUser.id, "suggestions", suggestionId);
 }
 
 function setStatus() {
   if (!isFirebaseConfigured) {
-    statusElement.textContent = "Mode local (Firebase non configuré)";
+    statusElement.textContent = `Mode local - Utilisateur: ${currentUser.name}`;
     return;
   }
 
-  statusElement.textContent = "Synchronisé en direct";
+  if (cloudUnavailable || !db) {
+    statusElement.textContent = `Mode local (cloud indisponible) - Utilisateur: ${currentUser.name}`;
+    return;
+  }
+
+  statusElement.textContent = `Synchronisé en direct - Utilisateur: ${currentUser.name}`;
+}
+
+function switchUser(name) {
+  const nextProfile = createUserProfile(name);
+  const changed = nextProfile.id !== currentUser.id || nextProfile.name !== currentUser.name;
+  currentUser = nextProfile;
+  saveUserProfile(currentUser);
+  if (userNameInput) {
+    userNameInput.value = currentUser.name;
+  }
+
+  if (!changed) {
+    setStatus();
+    return;
+  }
+
+  hideAutocomplete();
+  cloudSuggestions = [];
+
+  if (db) {
+    connectToSharedList();
+    connectToSharedSuggestions();
+  } else {
+    items = loadLocalItems();
+    render();
+    setStatus();
+  }
 }
 
 function render() {
@@ -446,7 +544,7 @@ function render() {
         item.category = nextCategory;
         render();
         try {
-          await updateDoc(doc(db, "shared", "home", "items", item.id), {
+          await updateDoc(itemDocRef(item.id), {
             category: nextCategory,
           });
         } catch {
@@ -464,7 +562,7 @@ function render() {
     iconBtn.addEventListener("click", async () => {
       if (db) {
         try {
-          await updateDoc(doc(db, "shared", "home", "items", item.id), {
+          await updateDoc(itemDocRef(item.id), {
             purchased: !item.purchased,
           });
         } catch {
@@ -480,7 +578,7 @@ function render() {
     deleteBtn.addEventListener("click", async () => {
       if (db) {
         try {
-          await deleteDoc(doc(db, "shared", "home", "items", item.id));
+          await deleteDoc(itemDocRef(item.id));
         } catch {
           statusElement.textContent = "Suppression cloud impossible";
         }
@@ -570,12 +668,22 @@ function escapeHtml(value) {
 }
 
 function persistLocalItems() {
-  localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(items));
+  localStorage.setItem(localItemsStorageKey(), JSON.stringify(items));
 }
 
 function loadLocalItems() {
   try {
-    const raw = localStorage.getItem(LOCAL_STORAGE_KEY);
+    const scopedKey = localItemsStorageKey();
+    let raw = localStorage.getItem(scopedKey);
+
+    if (!raw && currentUser.id === DEFAULT_USER.id) {
+      // Migration douce de l'ancien stockage unique vers le stockage par utilisateur.
+      raw = localStorage.getItem(LOCAL_STORAGE_KEY);
+      if (raw) {
+        localStorage.setItem(scopedKey, raw);
+      }
+    }
+
     const parsed = raw ? JSON.parse(raw) : [];
     if (!Array.isArray(parsed)) {
       return [];
@@ -592,6 +700,57 @@ function loadLocalItems() {
   } catch {
     return [];
   }
+}
+
+function loadUserProfile() {
+  try {
+    const raw = localStorage.getItem(USER_PROFILE_KEY);
+    if (!raw) {
+      return { ...DEFAULT_USER };
+    }
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== "object") {
+      return { ...DEFAULT_USER };
+    }
+    if (typeof parsed.id !== "string" || typeof parsed.name !== "string") {
+      return { ...DEFAULT_USER };
+    }
+    const id = sanitizeUserId(parsed.id);
+    const name = parsed.name.trim();
+    if (!id || !name) {
+      return { ...DEFAULT_USER };
+    }
+    return { id, name };
+  } catch {
+    return { ...DEFAULT_USER };
+  }
+}
+
+function saveUserProfile(profile) {
+  localStorage.setItem(USER_PROFILE_KEY, JSON.stringify(profile));
+}
+
+function createUserProfile(name) {
+  const trimmedName = (name || "").trim();
+  if (!trimmedName) {
+    return { ...currentUser };
+  }
+  const id = sanitizeUserId(trimmedName);
+  return {
+    id: id || `user-${crypto.randomUUID().slice(0, 8)}`,
+    name: trimmedName,
+  };
+}
+
+function sanitizeUserId(value) {
+  return normalizeText(value)
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "")
+    .slice(0, 40);
+}
+
+function localItemsStorageKey() {
+  return `${LOCAL_STORAGE_KEY}_${currentUser.id}`;
 }
 
 function getAllSuggestions() {
@@ -632,7 +791,7 @@ async function rememberSuggestion(text) {
     if (key) {
       try {
         await setDoc(
-          doc(db, "shared", "home", "suggestions", key),
+          suggestionDocRef(key),
           { text: normalized, createdAt: serverTimestamp() },
           { merge: true }
         );

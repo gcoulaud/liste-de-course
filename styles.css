@@ -56,6 +56,43 @@ body {
   color: #475467;
 }
 
+.user-profile {
+  margin-top: 10px;
+  margin-bottom: 10px;
+}
+
+.user-profile label {
+  display: block;
+  font-size: 0.82rem;
+  color: #475467;
+  margin-bottom: 6px;
+}
+
+.user-profile__controls {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+}
+
+.user-profile__controls input {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 0.96rem;
+}
+
+.user-profile__controls .btn-secondary {
+  padding: 10px 12px;
+}
+
+.user-profile__quick-actions {
+  margin-top: 8px;
+}
+
+.user-profile__quick-actions .btn-secondary {
+  padding: 8px 12px;
+}
+
 .qr-share-btn {
   width: 40px;
   height: 40px;
