@@ -56,6 +56,29 @@ body {
   color: #475467;
 }
 
+.user-tabs {
+  margin-top: 10px;
+  margin-bottom: 10px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.user-tab {
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  padding: 10px 12px;
+  background: #f8fafc;
+  color: #334155;
+  font-weight: 700;
+}
+
+.user-tab.is-active {
+  background: #0b7a75;
+  border-color: #0b7a75;
+  color: #ffffff;
+}
+
 .user-profile {
   margin-top: 10px;
   margin-bottom: 10px;

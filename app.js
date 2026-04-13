@@ -186,6 +186,8 @@ const itemsLeftElement = document.getElementById("items-left");
 const template = document.getElementById("item-template");
 const autocompleteList = document.getElementById("autocomplete-list");
 const statusElement = document.getElementById("sync-status");
+const tabMaisonBtn = document.getElementById("tab-maison");
+const tabMaxBtn = document.getElementById("tab-max");
 const userNameInput = document.getElementById("user-name-input");
 const saveUserBtn = document.getElementById("save-user-btn");
 const beaufilsUserBtn = document.getElementById("beaufils-user-btn");
@@ -210,6 +212,7 @@ let db = null;
 if (userNameInput) {
   userNameInput.value = currentUser.name;
 }
+renderUserTabs();
 
 bootstrap();
 
@@ -290,6 +293,18 @@ if (saveUserBtn && userNameInput) {
 if (beaufilsUserBtn && userNameInput) {
   beaufilsUserBtn.addEventListener("click", () => {
     switchUser("Beau-fils");
+  });
+}
+
+if (tabMaisonBtn) {
+  tabMaisonBtn.addEventListener("click", () => {
+    switchUser("Maison");
+  });
+}
+
+if (tabMaxBtn) {
+  tabMaxBtn.addEventListener("click", () => {
+    switchUser("Max");
   });
 }
 
@@ -502,6 +517,7 @@ function switchUser(name) {
   if (userNameInput) {
     userNameInput.value = currentUser.name;
   }
+  renderUserTabs();
 
   if (!changed) {
     setStatus();
@@ -518,6 +534,20 @@ function switchUser(name) {
     items = loadLocalItems();
     render();
     setStatus();
+  }
+}
+
+function renderUserTabs() {
+  const normalized = normalizeText(currentUser.name);
+  if (tabMaisonBtn) {
+    const isActive = normalized === "maison";
+    tabMaisonBtn.classList.toggle("is-active", isActive);
+    tabMaisonBtn.setAttribute("aria-selected", isActive ? "true" : "false");
+  }
+  if (tabMaxBtn) {
+    const isActive = normalized === "max";
+    tabMaxBtn.classList.toggle("is-active", isActive);
+    tabMaxBtn.setAttribute("aria-selected", isActive ? "true" : "false");
   }
 }
 
