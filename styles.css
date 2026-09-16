@@ -149,6 +149,27 @@ body {
   line-height: 1;
 }
 
+.edit-btn {
+  width: 40px;
+  height: 40px;
+  padding: 8px;
+  display: grid;
+  place-items: center;
+  color: #334155;
+  background: transparent;
+  border-radius: 10px;
+}
+
+.edit-btn:hover {
+  background: rgba(15, 23, 42, 0.06);
+}
+
+.edit-btn svg {
+  width: 24px;
+  height: 24px;
+  fill: currentColor;
+}
+
 .add-item-form {
   display: grid;
   grid-template-columns: 1fr auto;
@@ -439,6 +460,76 @@ button {
   border-radius: 8px;
   border: 1px solid var(--border);
   background: #fff;
+}
+
+.edit-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.edit-header h1 {
+  margin: 0;
+  font-size: clamp(1.5rem, 5vw, 2rem);
+}
+
+.edit-header p {
+  margin: 6px 0 0;
+  color: var(--muted);
+}
+
+.back-link {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  color: var(--text);
+  text-decoration: none;
+  font-size: 1.5rem;
+  background: rgba(255, 255, 255, 0.7);
+}
+
+.saved-data-list {
+  list-style: none;
+  margin: 14px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.saved-data-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 8px;
+}
+
+.saved-data-item input {
+  min-width: 0;
+}
+
+.saved-data-save {
+  padding: 11px 12px;
+  color: #fff;
+  background: var(--primary);
+}
+
+.saved-data-empty {
+  margin: 18px 0 4px;
+  color: var(--muted);
+  text-align: center;
+}
+
+@media (max-width: 480px) {
+  .saved-data-item {
+    grid-template-columns: 1fr auto;
+  }
+
+  .saved-data-item input {
+    grid-column: 1 / -1;
+  }
 }
 
 @media (min-width: 721px) {
