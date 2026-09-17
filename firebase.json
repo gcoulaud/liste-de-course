@@ -10,7 +10,15 @@
     "ignore": [
       "firebase.json",
       "**/.*",
-      "**/node_modules/**"
+      ".git/**",
+      ".codex/**",
+      "graphify-out/**",
+      "**/node_modules/**",
+      "AGENTS.md",
+      "FIREBASE_SETUP.md",
+      "firestore.rules",
+      "firestore.indexes.json",
+      "firebase deploy --only firestore:rules"
     ]
   }
 }
